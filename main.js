@@ -7,7 +7,8 @@ const app = express()
 
 app.get('/', (req, res) => {
     res.status(200).json({
-        text: "Hello World!"
+        name: "Yaromir Trehub",
+        age: 14
     })
 })
 
