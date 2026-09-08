@@ -5,7 +5,7 @@ const HOST = "localhost"
 
 const app = express()
 
-app.get('/', (req, res) => {
+app.get('/YaromirTrehub', (req, res) => {
     res.status(200).json({
         name: "Yaromir Trehub",
         age: 14
