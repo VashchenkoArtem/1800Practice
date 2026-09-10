@@ -5,6 +5,12 @@ const HOST = "localhost"
 
 const app = express()
 
+app.get('/mykytenko', (_, res) => {
+    res.status(200).json({
+        text: "my name is Petro"
+    })
+})
+
 app.get('/', (req, res) => {
     res.status(200).json({
         name: "Yaromir Trehub",
