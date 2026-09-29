@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import {
-    getAllProducts,
-    getProductById,
-    createProduct,
-} from '../handlers/products.js';
+import type { ProductHandlerContract } from '../handlers/products/products.types.js';
 
-export const productsRouter = Router()
+export function createProductRouter(productHandler: ProductHandlerContract){
+    const productsRouter = Router()
+    
+    productsRouter.get('/', productHandler.getAllProducts);
+    productsRouter.get('/:id', productHandler.getProductById);
+    productsRouter.post('/', productHandler.createProduct);
 
-productsRouter.get('/', getAllProducts);
-productsRouter.get('/:id', getProductById);
-productsRouter.post('/', createProduct);
+    return productsRouter
+}
