@@ -1,6 +1,11 @@
+import type { Category } from "../category/entity";
+
 export interface Product {
     id: number;
-    title: string;
+    name: string;
     price: number;
-    description: string;
+    categoryId: number;
+    image: string;
 }
+
+export type ProductWithCategory = Product & {category: Category}

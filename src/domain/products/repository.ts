@@ -1,8 +1,9 @@
-import type { Product } from "./entity.ts";
+import type { CreateProductInput } from "../../services/products/product.types.js";
+import type { Product, ProductWithCategory } from "./entity.ts";
 
 export interface ProductRepositoryContract {
-    getAllProducts: (take?: number) => Product[];
-    createProduct: (product: Product) => Promise<Product> | null;
-    findProductById: (id: number) => Product | undefined;
-    findProductByTitle: (title: string) => Product | undefined;
+    getAllProducts: (take?: number, categoryId?: number) => Promise<ProductWithCategory[]>;
+    createProduct: (product: CreateProductInput) => Promise<Product>;
+    findProductById: (id: number) => Promise<ProductWithCategory| null>;
+    findProductByTitle: (title: string) => Promise<ProductWithCategory | null>;
 }

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { ProductHandlerContract } from '../handlers/products/products.types.js';
+import type { ProductHandlerContract } from '../handlers/product/product.types.js';
 
 export function createProductRouter(productHandler: ProductHandlerContract){
     const productsRouter = Router()

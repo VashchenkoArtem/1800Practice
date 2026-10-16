@@ -1,5 +1,6 @@
 export interface CreateProductRequest {
-    title: string;
+    name: string;
     price: number;
-    description: string;
+    image: string;
+    categoryId: number
 }
