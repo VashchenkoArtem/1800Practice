@@ -1,10 +1,16 @@
 import type { UserRepositoryContract } from "../../domain/user/repository";
-import type { PasswordHasherContract, TokenSignerContract, UserServiceContract } from "./user.types";
+import type { 
+    TokenVerifierContract, 
+    PasswordHasherContract, 
+    TokenSignerContract, 
+    UserServiceContract
+ } from "./user.types";
 
 export function createUserService(
     repository: UserRepositoryContract,
     passwordHasher: PasswordHasherContract,
-    tokenSigner: TokenSignerContract
+    tokenSigner: TokenSignerContract,
+    tokenVerifier: TokenVerifierContract,
 ): UserServiceContract {
     return {
         async register(data) {
@@ -29,7 +35,7 @@ export function createUserService(
             const user = await repository.getUserByEmail(email.trim());
          
             if (!user || !await passwordHasher.verifyPassword(user.passwordHash, password)) {
-                throw new Error("INVALID CREDENTIALS");
+                throw new Error("INVALID_CREDENTIALS");
             }
             
             return {
@@ -37,7 +43,31 @@ export function createUserService(
                     id: user.id,
                     email: user.email
                 },
-                token: tokenSigner.signAccessToken(user.id)
+                accessToken: tokenSigner.signAccessToken(user.id),
+                refreshToken: tokenSigner.signRefreshToken(user.id)
+
+            }
+        },
+        async refresh(refreshToken) {
+            const userId = tokenVerifier.verifyRefreshToken(refreshToken)
+            const user = await repository.getUserById(userId)
+            if ( !user ) {
+                throw new Error("INVALID_REFRESH_TOKEN")
+            }
+            return {
+                accessToken: tokenSigner.signAccessToken(user.id),
+                refreshToken: tokenSigner.signRefreshToken(user.id)
+            }
+        },
+        async me(id){
+            const user = await repository.getUserById(id)
+            
+            if(!user){
+                throw new Error("UNAUTHORIZED")
+            }
+            return{
+                id: user.id,
+                email: user.email
             }
         }
     };

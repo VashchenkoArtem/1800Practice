@@ -9,5 +9,13 @@ export interface UserHandlerContract{
     login: (
         req: Request<{}, {}, UserCredentialsBody>,
         res: Response,
+    ) => Promise<void>,
+    refresh: (
+        req: Request,
+        res: Response
+    ) => Promise<void>
+    me: (
+        req: Request,
+        res: Response
     ) => Promise<void>
 }
