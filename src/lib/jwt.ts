@@ -1,5 +1,6 @@
 import "dotenv/config"
 import jwt from "jsonwebtoken"
+import { createHash, randomUUID } from "node:crypto";
 
 const accessTokenSecret = process.env.JWT_ACCESS_SECRET;
 const refreshTokenSecret = process.env.JWT_REFRESH_SECRET;
@@ -8,7 +9,7 @@ if (!accessTokenSecret) throw new Error("JWT_ACCESS_SECRET is not defined");
 if (!refreshTokenSecret) throw new Error("JWT_REFRESH_SECRET is not defined");
 
 export function signAccessToken(userId: number){
-    return jwt.sign({}, accessTokenSecret, {
+    return jwt.sign({}, accessTokenSecret!, {
         algorithm: "HS256",
         subject: String(userId),
         expiresIn: "15m"
@@ -16,16 +17,17 @@ export function signAccessToken(userId: number){
 }
 
 export function signRefreshToken(userId: number){
-    return jwt.sign({type: "refresh"}, refreshTokenSecret, {
+    return jwt.sign({type: "refresh"}, refreshTokenSecret!, {
         algorithm: "HS256",
         subject: String(userId),
-        expiresIn: "7d"
+        expiresIn: "7d",
+        jwtid: randomUUID()
     })
 }
 
 export function verifyAccessToken(token: string){
     try {
-        const payload = jwt.verify(token, accessTokenSecret, {
+        const payload = jwt.verify(token, accessTokenSecret!, {
             algorithms: ['HS256']
         })
         if (typeof payload === "string" || typeof payload.sub !== "string"){
@@ -41,7 +43,7 @@ export function verifyAccessToken(token: string){
 
 export function verifyRefreshToken(token: string){
     try {
-        const payload = jwt.verify(token, refreshTokenSecret, {
+        const payload = jwt.verify(token, refreshTokenSecret!, {
             algorithms: ['HS256']
         })
         if (typeof payload === "string" || typeof payload.sub !== "string" || payload.type !== "refresh"){
@@ -53,4 +55,10 @@ export function verifyRefreshToken(token: string){
         console.log(error)
         throw new Error("INVALID_REFRESH_TOKEN")
     }
+}
+
+export function hashRefreshToken(token: string): string {
+    return createHash("sha256")
+        .update(token)
+        .digest("hex");
 }

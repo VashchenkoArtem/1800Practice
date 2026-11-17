@@ -88,7 +88,36 @@ export function createUserHandler(
             catch(error) {
                 res.status(500).json({message: "Internal server error!"})
             }
+        },
+         
+        async logout(req, res) {
+            try {
+                const refreshToken = req.cookies?.refreshToken
+                
+                await service.logout(
+                    typeof refreshToken === "string" 
+                        ? refreshToken 
+                        : undefined
+                )
+
+                res.clearCookie("accessToken", {
+                    httpOnly: true,
+                    sameSite: "lax",
+                    secure: process.env.NODE_ENV === "production",
+                    path: "/"
+                })
+                res.clearCookie("refreshToken", {
+                    httpOnly: true,
+                    sameSite: "lax",
+                    secure: process.env.NODE_ENV === "production",
+                    path: "/"
+                })
+                res.status(200).json({message: "Logged out"})
+
+            } catch (error) {
+                res.status(500).json({message: "Internal server error!"})
+
+            }
         }
-            
     }
 }

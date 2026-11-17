@@ -13,10 +13,11 @@ import { createUserRepository } from "./repositories/user.js";
 import { createUserService } from "./services/user/user.js";
 import { createUserHandler } from "./transport/handlers/user/user.js";
 import { hashPassword, verifyPassword } from "./lib/password.js";
-import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "./lib/jwt.js";
+import { hashRefreshToken, signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "./lib/jwt.js";
 import cors from "cors"  
 import cookieParser from "cookie-parser"
 import { createRequireAuth } from "./transport/middlewares/require-auth.js";
+import { createRefreshSessionRepository } from "./repositories/refresh-session.js";
 
 const PORT = 8000
 const HOST = "localhost"
@@ -34,7 +35,10 @@ const categoryHandlers = createCategoryHandlers(categoryService);
 const categoryRouter = createCategoryRouter(categoryHandlers);
 
 const userRepository = createUserRepository(db);
-const userService = createUserService(userRepository, 
+const refreshSessionRepository = createRefreshSessionRepository(db)
+const userService = createUserService(
+    userRepository, 
+    refreshSessionRepository,
     { hashPassword: hashPassword, 
         verifyPassword: verifyPassword
     }, { 
@@ -44,6 +48,9 @@ const userService = createUserService(userRepository,
     {
         verifyAccessToken: verifyAccessToken,
         verifyRefreshToken: verifyRefreshToken
+    },
+    {
+        hashRefreshToken: hashRefreshToken
     }
 );
 const userHandlers = createUserHandler(userService);
@@ -53,7 +60,8 @@ const userRouter = createUserRouter(userHandlers, requireAuth);
 
 app.use(cookieParser())
 app.use(cors({
-    origin: "http://localhost:5173"
+    origin: "http://localhost:5173",
+    credentials: true
 }))
 app.use(express.json());
 app.use("/products", productRouter);

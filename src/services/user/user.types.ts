@@ -20,6 +20,10 @@ export interface TokenVerifierContract {
     verifyRefreshToken: (token: string) => number
 }
 
+export interface RefreshTokenHasherContract {
+    hashRefreshToken: (hash: string) => string;
+}
+
 export interface UserTokens {
     accessToken: string,
     refreshToken: string
@@ -29,5 +33,6 @@ export interface UserServiceContract {
     register: (data: UserInput) => Promise<PublicUser>,
     login: (data: UserInput) => Promise<{user: PublicUser} & UserTokens>,
     refresh: (refreshToken: string) => Promise<UserTokens>,
-    me: (id: number) => Promise<PublicUser>
+    me: (id: number) => Promise<PublicUser>,
+    logout: (refreshToken?: string) => Promise<void>
 }
