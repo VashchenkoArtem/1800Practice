@@ -1,113 +1,113 @@
 import type { RefreshSessionRepositoryContract } from "../../domain/refresh-session/repository";
 import type { UserRepositoryContract } from "../../domain/user/repository";
-import type { 
-    TokenVerifierContract, 
-    PasswordHasherContract, 
-    TokenSignerContract, 
-    UserServiceContract,
-    RefreshTokenHasherContract
- } from "./user.types";
+import type {
+	PasswordHasherContract,
+	UserServiceContract,
+	UserServiceDependencies,
+} from "./user.types";
 
 export function createUserService(
-    repository: UserRepositoryContract,
-    refreshSessionRepository: RefreshSessionRepositoryContract,
-    passwordHasher: PasswordHasherContract,
-    tokenSigner: TokenSignerContract,
-    tokenVerifier: TokenVerifierContract,
-    refreshTokenHasher: RefreshTokenHasherContract
+	dependencies: UserServiceDependencies,
 ): UserServiceContract {
-    return {
-        async register(data) {
-            const { email, password } = data;
+	const { repository, refreshSessionRepository, passwordHasher, tokenHasher } =
+		dependencies;
 
-            const hashPassword = await passwordHasher.hashPassword(password);
-            
-            const user = await repository.createUser({
-                email: email.trim(),
-                passwordHash: hashPassword
-            });
-            
-            return {
-                id: user.id,
-                email: user.email
-            };
-        },
+	return {
+		async register(data) {
+			const { email, password } = data;
 
-        async login(data) {
-            const { email, password } = data;
+			const hashPassword = await passwordHasher.hashPassword(password);
 
-            const user = await repository.getUserByEmail(email.trim());
-            
-            if (!user || !await passwordHasher.verifyPassword(user.passwordHash, password)) {
-                throw new Error("INVALID_CREDENTIALS");
-            }
-            
-            const refreshToken = tokenSigner.signRefreshToken(user.id);
+			const user = await repository.createUser({
+				email: email.trim(),
+				passwordHash: hashPassword,
+			});
 
-            await refreshSessionRepository.create({
-                userId: user.id,
-                tokenHash: refreshTokenHasher.hashRefreshToken(refreshToken),
-                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-            })
+			return {
+				id: user.id,
+				email: user.email,
+			};
+		},
 
-            return {
-                user: {
-                    id: user.id,
-                    email: user.email
-                },
-                accessToken: tokenSigner.signAccessToken(user.id),
-                refreshToken: tokenSigner.signRefreshToken(user.id)
+		async login(data) {
+			const { email, password } = data;
 
-            }
-        },
-        async refresh(refreshToken) {
-            const userId = tokenVerifier.verifyRefreshToken(refreshToken)
-            const oldHash = refreshTokenHasher.hashRefreshToken(refreshToken)
-            
-            const session = await refreshSessionRepository.getByHash(oldHash)
+			const user = await repository.getUserByEmail(email.trim());
 
-            if (!session) {
-                throw new Error("INVALID_REFRESH_TOKEN")
-            }
+			if (
+				!user ||
+				!(await passwordHasher.verifyPassword(user.passwordHash, password))
+			) {
+				throw new Error("INVALID_CREDENTIALS");
+			}
 
-            if (userId !== session.userId || session.expiresAt <= new Date()) {
-                throw new Error("INVALID_REFRESH_TOKEN")
-            }
+			const refreshToken = tokenHasher.signRefreshToken(user.id);
 
-            const user = await repository.getUserById(userId)
-            if ( !user ) {
-                throw new Error("INVALID_REFRESH_TOKEN")
-            }
-            
-            const newRefreshToken = tokenSigner.signRefreshToken(user.id)
-            const isChanged = refreshSessionRepository.update(
-                oldHash, 
-                refreshTokenHasher.hashRefreshToken(newRefreshToken), 
-                new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-            )
-            if(!isChanged){
-                throw new Error("INVALID_REFRESH_TOKEN")
-            }
-            return {
-                accessToken: tokenSigner.signAccessToken(user.id),
-                refreshToken: newRefreshToken
-            }
-        },
-        async me(id){
-            const user = await repository.getUserById(id)
-            
-            if(!user){
-                throw new Error("UNAUTHORIZED")
-            }
-            return{
-                id: user.id,
-                email: user.email
-            }
-        },
-        async logout(refreshToken) {
-            if (!refreshToken) return;
-            await refreshSessionRepository.delete(refreshTokenHasher.hashRefreshToken(refreshToken));
-        },
+			await refreshSessionRepository.create({
+				userId: user.id,
+				tokenHash: tokenHasher.hashRefreshToken(refreshToken),
+				expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+			});
 
-    };
+			return {
+				user: {
+					id: user.id,
+					email: user.email,
+				},
+				accessToken: tokenHasher.signAccessToken(user.id),
+				refreshToken: tokenHasher.signRefreshToken(user.id),
+			};
+		},
+		async refresh(refreshToken) {
+			const userId = tokenHasher.verifyRefreshToken(refreshToken);
+			const oldHash = tokenHasher.hashRefreshToken(refreshToken);
+
+			const session = await refreshSessionRepository.getByHash(oldHash);
+
+			if (!session) {
+				throw new Error("INVALID_REFRESH_TOKEN");
+			}
+
+			if (userId !== session.userId || session.expiresAt <= new Date()) {
+				throw new Error("INVALID_REFRESH_TOKEN");
+			}
+
+			const user = await repository.getUserById(userId);
+			if (!user) {
+				throw new Error("INVALID_REFRESH_TOKEN");
+			}
+
+			const newRefreshToken = tokenHasher.signRefreshToken(user.id);
+			const isChanged = refreshSessionRepository.update(
+				oldHash,
+				tokenHasher.hashRefreshToken(newRefreshToken),
+				new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+			);
+			if (!isChanged) {
+				throw new Error("INVALID_REFRESH_TOKEN");
+			}
+			return {
+				accessToken: tokenHasher.signAccessToken(user.id),
+				refreshToken: newRefreshToken,
+			};
+		},
+		async me(id) {
+			const user = await repository.getUserById(id);
+
+			if (!user) {
+				throw new Error("UNAUTHORIZED");
+			}
+			return {
+				id: user.id,
+				email: user.email,
+			};
+		},
+		async logout(refreshToken) {
+			console.log(refreshToken);
+			if (!refreshToken) return;
+			await refreshSessionRepository.delete(
+				tokenHasher.hashRefreshToken(refreshToken),
+			);
+		},
+	};
 }

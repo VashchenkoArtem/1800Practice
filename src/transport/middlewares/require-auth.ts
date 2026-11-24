@@ -1,18 +1,21 @@
 import type { RequestHandler } from "express";
+import { readAccessToken } from "../cookies/user";
 
-export function createRequireAuth(verifyAccessToken: (token: string) => number): RequestHandler {
-    return (req, res, next) => {
-        const token = req.cookies?.accessToken
-        if(typeof token !== "string") {
-            res.status(401).json({message: "Unauthorized"})
-            return
-        }
+export function createRequireAuth(
+	verifyAccessToken: (token: string) => number,
+): RequestHandler {
+	return (req, res, next) => {
+		const token = readAccessToken(req);
+	if (typeof token !== "string") {
+			res.status(401).json({ message: "Unauthorized" });
+			return;
+		}
 
-        try {
-            res.locals.userId = verifyAccessToken(token)
-            next()
-        }catch(error) {
-            res.status(401).json({message: "Unauthorized"})
-        }
-    };
+		try {
+			res.locals.userId = verifyAccessToken(token);
+			next();
+		} catch (error) {
+			res.status(401).json({ message: "Unauthorized" });
+		}
+	};
 }

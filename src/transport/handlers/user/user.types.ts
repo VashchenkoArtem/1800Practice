@@ -1,25 +1,16 @@
-import type { Request, Response } from "express"
-import type { UserCredentialsBody } from "../../dto/user/requests"
+import type { Request, Response } from "express";
+import type { UserCredentialsBody } from "../../dto/user/requests";
 
-export interface UserHandlerContract{
-    register: (
-        req: Request<{}, {}, UserCredentialsBody>,
-        res: Response,
-    ) => Promise<void>
-    login: (
-        req: Request<{}, {}, UserCredentialsBody>,
-        res: Response,
-    ) => Promise<void>,
-    refresh: (
-        req: Request,
-        res: Response
-    ) => Promise<void>
-    me: (
-        req: Request,
-        res: Response
-    ) => Promise<void>
-    logout: (
-        req: Request,
-        res: Response
-    ) => Promise<void>
+export interface UserHandlerContract {
+	register: (
+		req: Request<{}, {}, UserCredentialsBody>,
+		res: Response,
+	) => Promise<void>;
+	login: (
+		req: Request<{}, {}, UserCredentialsBody>,
+		res: Response,
+	) => Promise<void>;
+	refresh: (req: Request, res: Response) => Promise<void>;
+	me: (req: Request, res: Response) => Promise<void>;
+	logout: (req: Request, res: Response) => Promise<void>;
 }

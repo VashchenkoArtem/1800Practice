@@ -1,17 +1,17 @@
-import { Router, type RequestHandler } from 'express';
+import { type RequestHandler, Router } from "express";
 import type { UserHandlerContract } from "../handlers/user/user.types";
 
 export function createUserRouter(
-    userHandler: UserHandlerContract,
-    requireAuth: RequestHandler
-){
-    const userRouter = Router()
+	userHandler: UserHandlerContract,
+	requireAuth: RequestHandler,
+) {
+	const userRouter = Router();
 
-    userRouter.post('/register', userHandler.register)
-    userRouter.post('/login', userHandler.login)
-    userRouter.post('/refresh', userHandler.refresh)
+	userRouter.post("/register", userHandler.register);
+	userRouter.post("/login", userHandler.login);
+	userRouter.post("/refresh", userHandler.refresh);
 
-    userRouter.get('/me', requireAuth, userHandler.me)
-    userRouter.post('/logout', userHandler.logout)
-    return userRouter
+	userRouter.get("/me", requireAuth, userHandler.me);
+	userRouter.post("/logout", userHandler.logout);
+	return userRouter;
 }
